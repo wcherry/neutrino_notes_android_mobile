@@ -5,6 +5,7 @@ import com.neutrino.notes.core.markdown.WikiLink
 import com.neutrino.notes.core.model.NoteItem
 import com.neutrino.notes.core.model.NotesSection
 import com.neutrino.notes.core.model.PendingMutation
+import com.neutrino.shared.core.api.ApiException
 import com.neutrino.shared.core.api.DriveDate
 import com.neutrino.shared.core.api.FolderDto
 import kotlinx.coroutines.CoroutineScope
@@ -42,6 +43,13 @@ class NotesDriveService(
     private val _loading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _loading
     val error = MutableStateFlow<String?>(null)
+
+    /**
+     * The last listing could not reach the server, though the device may think it is online — a
+     * server that is down, a captive portal. Shown inline, never as a dialog: it is a state, not
+     * something the user did wrong.
+     */
+    val unreachable = MutableStateFlow(false)
 
     // ── Queries ─────────────────────────────────────────────────────────────────────────────────
 
@@ -113,6 +121,10 @@ class NotesDriveService(
                     }
                 }
             }
+            unreachable.value = false
+        } catch (e: ApiException.Network) {
+            // The listing already on screen stays; the browser says the server is out of reach.
+            unreachable.value = true
         } catch (e: Exception) {
             // Offline, a failed refresh is expected: the listing already on screen stays, and the banner says why.
             if (isOnline()) error.value = e.message
