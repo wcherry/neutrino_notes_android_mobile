@@ -230,6 +230,18 @@ class ServicesTest {
         assertFalse(fake.keyRefs[item.id]!!.values.first().first == fake.keyRefs[copy.id]!!.values.first().first)
     }
 
+    /** A server that is down while the phone is online is a state to show, not an error dialog. */
+    @Test
+    fun anUnreachableServerIsReportedInlineNotAsAnError() = runBlocking {
+        drive.load(com.neutrino.notes.core.model.NotesSection.MY_NOTES)
+        assertFalse(drive.unreachable.value)
+        fake.shutdown()
+        online = true
+        drive.load(com.neutrino.notes.core.model.NotesSection.MY_NOTES)
+        assertTrue(drive.unreachable.value)
+        assertNull(drive.error.value)
+    }
+
     @Test
     fun anOfflineEditQueuesAsCiphertextAndDrainsWithItsLinks() = runBlocking {
         val item = drive.createNote("Plan", null)

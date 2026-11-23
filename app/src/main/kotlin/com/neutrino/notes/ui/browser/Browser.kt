@@ -103,6 +103,7 @@ fun BrowserScreen(initialSection: NotesSection, folderId: String?, title: String
     val shared by drive.sharedItems.collectAsState()
     val trash by drive.trashItems.collectAsState()
     val loading by drive.isLoading.collectAsState()
+    val unreachable by drive.unreachable.collectAsState()
     val online by graph.isOnline.collectAsState()
     val offlineDocs by graph.offline.notes.collectAsState()
     val chosenOrder by graph.prefs.sortOrder.collectAsState()
@@ -180,7 +181,11 @@ fun BrowserScreen(initialSection: NotesSection, folderId: String?, title: String
                 },
             ) {
                 LazyColumn(Modifier.fillMaxSize()) {
-                    if (items.isEmpty() && !loading) item {
+                    if (unreachable && online) item {
+                        Text("Can’t reach the server. Notes kept on this phone still open, and edits sync when it’s back.", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp))
+                    }
+                    if (items.isEmpty() && !loading && !unreachable) item {
                         Text(section.emptyMessage, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth().padding(32.dp))
                     }
                     items(items, key = { it.id }) { item ->
